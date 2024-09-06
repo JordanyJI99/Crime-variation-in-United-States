@@ -1,0 +1,307 @@
+---
+title: "Crime Rate variation from 2001 to 2016: A Comparative Analysis Across U.S. States"
+author: "by Jordany Jorge Iglesias"
+date: "2024-08-30"
+output:
+  html_document: default
+  pdf_document: default
+---
+
+#### **Executive Summary**
+
+##### This report presents a detailed analysis of criminality across various jurisdictions in the United States over 16 years (from 2001 to 2016). The study calculates crime indexes by type of crime, visualizes them, and provides an interpretation of the observed trends. Finally, an overall crime index is presented, summarizing the situation through the years.  
+
+<br>
+
+#### **Introduction**
+
+##### The primary objective of this report is to assess changes in crime rates across the United States between 2001 and 2016 to determine whether they have increased or decreased over the years. The aim is to determine if the United States was safer in 2016 compared to 2001 and to identify the safest and least safe states for the population.  
+
+<br>  
+
+#### **Data Description**
+
+##### The data used in this analysis comes from official sources that record crimes committed in various jurisdictions of the United States between the years 2001 and 2016. The main variables include the type of crime, the jurisdiction, and the year in which it was committed. 
+##### For this study, we utilized the publicly available dataset **"Crime and Incarceration in the United States"** hosted on Kaggle" (https://www.kaggle.com/datasets/christophercorrea/prisoners-and-crime-in-united-states). This dataset was chosen for its comprehensive collection of crime and incarceration statistics at the state level, providing a robust foundation for our analysis.
+
+<br>
+
+#### **Methodology**
+
+##### Crime indexes were calculated for each type of crime and visualized using appropriate graphs. The visualizations include line charts to analyze temporal trends and heat map to compare jurisdictions. Additionally, snippets of R code are included to allow for the reproduction of the analysis.
+
+<br>
+
+#### **Limitations**
+
+##### This study focused on analyzing crime trends using a dataset limited to crime types and state population figures. While these variables were sufficient for calculating crime indices, understanding the reasons behind these trends requires additional data. Demographic, economic, and educational factors, as well as local policies, are critical for a deeper analysis. Future research should incorporate these variables to provide a more comprehensive understanding of the underlying causes of regional crime rate variations.
+
+<br>
+
+#### **Different types of crimes indexes behavior**
+
+```{r setup, include=FALSE}
+## Loading Libraries:
+library(tidyverse)
+library(ggplot2)
+setwd("C:/Zcosas/Data Analyst/Data Analyst Google Certificated/8 Case Studies/CAPSTONE PROJECT")
+library(here)
+library(lubridate)
+library(dplyr)
+library(patchwork)
+library(knitr)
+
+#Loading files:
+population_data <- read.csv("crime_and_incarceration_by_state.csv")
+
+
+## Making a new data frame to only stay with the data we are going to use
+population_data <- subset(population_data, select = c(jurisdiction, year, prisoner_count, state_population, 
+                                                murder_manslaughter, rape_legacy, robbery, agg_assault, violent_crime_total,  
+                                                burglary, larceny, vehicle_theft, property_crime_total))
+population_data <- mutate(population_data, total_crimes = population_data$violent_crime_total + population_data$property_crime_total)
+
+
+##Creating a new table where I'll put all the index and population:
+criminal_indexes <- subset(population_data, select = c(jurisdiction, year, state_population))
+
+## NOW STARTS THE 1ST STAGE OF THE PROCESS WHERE I GOING TO ANALYZE EACH CASE BY SEPARATE.
+
+### Working now with the "Murder Manslaughter" to see how the variable change over the years:
+criminal_indexes <- mutate(criminal_indexes, 
+                           murder_index = (population_data$murder_manslaughter/population_data$state_population)*100000)
+
+### Working now with the "Rape Legacy" to see how the variable change over the years:
+criminal_indexes <- mutate(criminal_indexes, 
+                           rape_index = (population_data$rape_legacy/population_data$state_population)*100000)
+
+### Working now with the "Robbery" to see how the variable change over the years:
+criminal_indexes <- mutate(criminal_indexes, 
+                           robbery_index = (population_data$robbery/population_data$state_population)*100000)
+criminal_indexes <- rename(criminal_indexes, robbery_index = robbery_index)
+
+### Working now with the "Agg Assault" to see how the variable change over the years:
+criminal_indexes <- mutate(criminal_indexes, 
+                           agg_assault_index = (population_data$agg_assault/population_data$state_population)*100000)
+
+### Working now with the "Total Violent Crime" to see how the variable change over the years:
+criminal_indexes <- mutate(criminal_indexes, 
+                           total_violent_index = (population_data$violent_crime_total/population_data$state_population)*100000)
+
+### Working now with the "Burglary Crime" to see how the variable change over the years:
+criminal_indexes <- mutate(criminal_indexes, 
+                           burglary_index = (population_data$burglary/population_data$state_population)*100000)
+
+### Working now with the "Larceny Crime" to see how the variable change over the years:
+criminal_indexes <- mutate(criminal_indexes, 
+                           larceny_index = (population_data$larceny/population_data$state_population)*100000)
+
+### Working now with the "Vehicle Theft Crime" to see how the variable change over the years:
+criminal_indexes <- mutate(criminal_indexes, 
+                           vehicle_theft_index = (population_data$vehicle_theft/population_data$state_population)*100000)
+
+### Working now with the "Property Crime" to see how the variable change over the years:
+criminal_indexes <- mutate(criminal_indexes, 
+                           property_crime_index = (population_data$property_crime_total/population_data$state_population)*100000)
+
+## General crime index
+criminal_indexes <- mutate(criminal_indexes, 
+                           crime_rate = (population_data$total_crimes/population_data$state_population)*100000)
+```
+
+```{r, echo=FALSE, message=FALSE, warning=FALSE, fig.width=12, fig.height=3}
+## Murder Manslaughter
+plot1 <- ggplot(data = criminal_indexes) + geom_smooth(mapping = aes(x = year, y = murder_index), color = "red") + 
+  labs(title = "Murder Manslaughter vs. Year", subtitle = "Index behavior over the last 16 years", x = "Year", y = "Murder Manslaughter Index") + 
+  theme_minimal(base_size = 14) + 
+  theme(panel.background = element_rect(fill = "white", color = NA), 
+        panel.grid.major = element_line(color = "gray80", size = 0.5), 
+        panel.grid.minor = element_line(colour = "gray95", size = 0.25), 
+        plot.title = element_text(face = "bold", hjust = 0.5, size = 16), 
+        plot.subtitle = element_text(hjust = 0.5, size = 12), 
+        plot.margin = margin(20, 20, 20, 20))
+
+## Rape Legacy
+plot2 <- ggplot(data = criminal_indexes) + geom_smooth(mapping = aes(x = year, y = rape_index), color = "red") + 
+  labs(title = "Rape Legacy vs. Year", subtitle = "Index behavior over the last 16 years", x = "Year", y = "Rape Legacy Index") + 
+  theme_minimal(base_size = 14) + 
+  theme(panel.background = element_rect(fill = "white", color = NA), 
+        panel.grid.major = element_line(color = "gray80", size = 0.5), 
+        panel.grid.minor = element_line(colour = "gray95", size = 0.25), 
+        plot.title = element_text(face = "bold", hjust = 0.5, size = 16), 
+        plot.subtitle = element_text(hjust = 0.5, size = 12), 
+        plot.margin = margin(20, 20, 20, 20))
+
+## Robbery
+plot3 <- ggplot(data = criminal_indexes) + geom_smooth(mapping = aes(x = year, y = robbery_index), color = "red") + 
+  labs(title = "Robbery vs. Year", subtitle = "Index behavior over the last 16 years", x = "Year", y = "Robbery Index") + 
+  theme_minimal(base_size = 14) + 
+  theme(panel.background = element_rect(fill = "white", color = NA), 
+        panel.grid.major = element_line(color = "gray80", size = 0.5), 
+        panel.grid.minor = element_line(colour = "gray95", size = 0.25), 
+        plot.title = element_text(face = "bold", hjust = 0.5, size = 16), 
+        plot.subtitle = element_text(hjust = 0.5, size = 12), 
+        plot.margin = margin(20, 20, 20, 20))
+
+## Agg Assaults plot
+plot4 <- ggplot(data = criminal_indexes) + geom_smooth(mapping = aes(x = year, y = agg_assault_index), color = "red") + 
+  labs(title = "Agg Assault Index vs. Year", subtitle = "Index behavior over the last 16 years", x = "Year", y = "Agg Assault Index") + 
+  theme_minimal(base_size = 14) + 
+  theme(panel.background = element_rect(fill = "white", color = NA), 
+        panel.grid.major = element_line(color = "gray80", size = 0.5), 
+        panel.grid.minor = element_line(colour = "gray95", size = 0.25), 
+        plot.title = element_text(face = "bold", hjust = 0.5, size = 16), 
+        plot.subtitle = element_text(hjust = 0.5, size = 12), 
+        plot.margin = margin(20, 20, 20, 20))
+
+## Total Violent Crime
+plot5 <- ggplot(data = criminal_indexes) + geom_smooth(mapping = aes(x = year, y = total_violent_index), color = "red") + 
+  labs(title = "Total Violent Crime vs. Year", subtitle = "Index behavior over the last 16 years", x = "Year", y = "Total Violent Crime") + 
+  theme_minimal(base_size = 14) + 
+  theme(panel.background = element_rect(fill = "white", color = NA), 
+        panel.grid.major = element_line(color = "gray80", size = 0.5), 
+        panel.grid.minor = element_line(colour = "gray95", size = 0.25), 
+        plot.title = element_text(face = "bold", hjust = 0.5, size = 16), 
+        plot.subtitle = element_text(hjust = 0.5, size = 12), 
+        plot.margin = margin(20, 20, 20, 20))
+
+## Burglary Crime
+plot6 <- ggplot(data = criminal_indexes) + geom_smooth(mapping = aes(x = year, y = burglary_index), color = "red") + 
+  labs(title = "Burglary Crime vs. Year", subtitle = "Index behavior over the last 16 years", x = "Year", y = "Burglary Index") + 
+  theme_minimal(base_size = 14) + 
+  theme(panel.background = element_rect(fill = "white", color = NA), 
+        panel.grid.major = element_line(color = "gray80", size = 0.5), 
+        panel.grid.minor = element_line(colour = "gray95", size = 0.25), 
+        plot.title = element_text(face = "bold", hjust = 0.5, size = 16), 
+        plot.subtitle = element_text(hjust = 0.5, size = 12), 
+        plot.margin = margin(20, 20, 20, 20))
+
+## Larceny Crime
+plot7 <- ggplot(data = criminal_indexes) + geom_smooth(mapping = aes(x = year, y = larceny_index), color = "red") + 
+  labs(title = "Larceny Crime vs. Year", subtitle = "Index behavior over the last 16 years", x = "Year", y = "Larceny Index") + 
+  theme_minimal(base_size = 14) + 
+  theme(panel.background = element_rect(fill = "white", color = NA), 
+        panel.grid.major = element_line(color = "gray80", size = 0.5), 
+        panel.grid.minor = element_line(colour = "gray95", size = 0.25), 
+        plot.title = element_text(face = "bold", hjust = 0.5, size = 16), 
+        plot.subtitle = element_text(hjust = 0.5, size = 12), 
+        plot.margin = margin(20, 20, 20, 20))
+
+## Vehicle Theft Crime
+plot8 <- ggplot(data = criminal_indexes) + geom_smooth(mapping = aes(x = year, y = vehicle_theft_index), color = "red") + 
+  labs(title = "Vehicle Theft Crime vs. Year", subtitle = "Index behavior over the last 16 years", x = "Year", y = "Vehicle Theft Index") + 
+  theme_minimal(base_size = 14) + 
+  theme(panel.background = element_rect(fill = "white", color = NA), 
+        panel.grid.major = element_line(color = "gray80", size = 0.5), 
+        panel.grid.minor = element_line(colour = "gray95", size = 0.25), 
+        plot.title = element_text(face = "bold", hjust = 0.5, size = 16), 
+        plot.subtitle = element_text(hjust = 0.5, size = 12), 
+        plot.margin = margin(20, 20, 20, 20))
+
+## Property Crime
+plot9 <- ggplot(data = criminal_indexes) + geom_smooth(mapping = aes(x = year, y = property_crime_index), color = "red") + 
+  labs(title = "Property Crime vs. Year", subtitle = "Index behavior over the last 16 years", x = "Year", y = "Property Crime Index") + 
+  theme_minimal(base_size = 14) + 
+  theme(panel.background = element_rect(fill = "white", color = NA), 
+        panel.grid.major = element_line(color = "gray80", size = 0.5), 
+        panel.grid.minor = element_line(colour = "gray95", size = 0.25), 
+        plot.title = element_text(face = "bold", hjust = 0.5, size = 16), 
+        plot.subtitle = element_text(hjust = 0.5, size = 12), 
+        plot.margin = margin(20, 20, 20, 20))
+
+(plot1 | plot2 | plot3)
+(plot4 | plot5 | plot6)
+(plot7 | plot8 | plot9)
+```
+
+##### To calculate the different types of indices, the following formula was used: (**crime_type/state\_population**)***100,000**), where:
+- **crime_type:** refers to the number of occurrences of the specific crime for which the index is being calculated.
+- **state_population:** refers to the number of people residing in a particular state.
+- **Multiplication by 100,000:** is commonly used to determine the rate of a given occurrence per 100,000 inhabitants.
+
+#### **Crime Rate Behavior**
+```{r, echo=FALSE, message=FALSE, warning=FALSE}
+##------------------------ Crime Rate on the last years ----------------------------------
+ggplot(data = criminal_indexes) + geom_smooth(mapping = aes(x = year, y = crime_rate), color = "red") + 
+  labs(title = "Crime Rate vs. Year", subtitle = "Index behavior over the last 16 years", x = "Year", y = "Crime rate per 100,000 inhabitants") + 
+  theme_minimal(base_size = 14) + 
+  theme(panel.background = element_rect(fill = "white", color = NA), 
+        panel.grid.major = element_line(color = "gray80", size = 0.5), 
+        panel.grid.minor = element_line(colour = "gray95", size = 0.25), 
+        plot.title = element_text(face = "bold", hjust = 0.5, size = 16), 
+        plot.subtitle = element_text(hjust = 0.5, size = 12), 
+        plot.margin = margin(20, 20, 20, 20))
+```
+
+##### To calculate the **Crime Rate**, the following formula was used: (**total_crimes/state\_population**)***100,000**), where:
+- **total_crimes:** refers to the sum of all occurrences of the different types of crimes.
+- **state_population:** refers to the number of people residing in a particular state.
+- **Multiplication by 100,000:** is commonly used to determine the rate of a given occurrence per 100,000 inhabitants.
+
+
+##### While overall crime rates in the United States declined from 2001 to 2016, the magnitude and pattern of this decline varied across different types of offenses. Although crimes such as aggravated assault and overall violent crime experienced a brief increase in some years, the long-term trend remains downward. These results indicate a general decrease in insecurity, albeit with important nuances depending on the specific crime.
+
+<br>
+
+#### **Looking for Correlation**
+
+```{r, echo=TRUE, message=FALSE, warning=FALSE}
+cor <- population_data[, c("violent_crime_total", "property_crime_total", "state_population")]
+correlation_matrix <- round(cor(cor, use = "complete.obs"), 2)
+
+kable(correlation_matrix, caption = "Correlation Matrix of Crime and Population Data")
+```
+
+##### _A correlation value close to **1** indicates a **strong positive correlation**, while a value close to **-1** indicates a **strong negative correlation**._
+
+##### The correlation matrix revealed strong positive relationships between the total number of **violent crimes**, **property crimes**, and **state population**. Specifically:
+##### - The correlation between **violent crime** and **property crime** is **0.97**, indicating that states with higher **violent crime** rates also tend to have higher **property crime rates**.
+##### - The correlation between **violent crime** and **state population** is **0.96**, and between **property crime** and **state population** is **0.95**, suggesting that states with larger **populations** generally report higher numbers of both **violent** and **property crimes**.
+##### These findings highlight that **crime rates** are closely tied to **population** size, and that areas with more inhabitants naturally experience more criminal activity. Additionally, the strong correlation between **violent** and **property crimes** suggests that efforts to reduce crime in one category may also help lower the other.
+
+<br>
+
+##### The heatmap reveals a complex pattern of crime rate changes across the United States. Despite a national average **decline** of **30.42%**, the data highlights notable exceptions, such as **South Dakota** and **North Dakota**, which experienced increases of **3.97%** and **6.31%**, respectively.
+
+![](C:/Zcosas/Data Analyst/Data Analyst Google Certificated/8 Case Studies/CAPSTONE PROJECT/Heatmap eeuu percent change.png)
+
+<br>
+
+##### To further examine the spatial distribution of crime in 2016, the following heatmap displays the crime rate in 2016 using a color scale ranging from dark blue (for states with the lowest rate) to deep red (for those with the highest). 
+
+![](C:/Zcosas/Data Analyst/Data Analyst Google Certificated/8 Case Studies/CAPSTONE PROJECT/Heatmap eeuu crime by state.png)
+
+##### The heatmap depicting crime rates across the United States in 2016 reveals striking geographic disparities. States in the Southern and Southwestern regions consistently demonstrate higher crime rates compared to their Northeastern counterparts. Notably, **New Mexico, Alaska, Louisiana, Arkansas**, and **Washington** reported the highest crime rates, while **Vermont, New Hampshire, Maine, New Jersey**, and **New York** exhibited the lowest. These variations underscore the need for a nuanced understanding of crime dynamics, as factors such as socioeconomic conditions, law enforcement practices, and population density likely contribute to these regional differences.
+
+<br>
+
+#### **Conclusions**
+
+##### This comprehensive analysis of crime rates across various U.S. jurisdictions from 2001 to 2016 reveals significant trends and patterns. Overall, the study confirms a general decline in crime rates over the 16-year period, suggesting an improvement in public safety nationwide. However, this decline was not uniform across all crime types or regions.
+
+
+##### Crimes like aggravated assault and total violent crime showed temporary increases in certain years, indicating that while the long-term trend is downward, fluctuations in specific crime categories still pose challenges. Additionally, the heatmap analysis highlights substantial regional disparities, with states in the Southern and Southwestern regions exhibiting consistently higher crime rates compared to their Northeastern counterparts.
+
+##### Noteworthy exceptions to the national trend include states like South Dakota and North Dakota, where crime rates increased despite the overall national decline. This suggests that local factors, such as socioeconomic conditions, law enforcement practices, and population density, play a crucial role in shaping crime dynamics.
+
+##### In conclusion, while the United States has become generally safer over the studied period, the findings underscore the importance of targeted interventions tailored to the unique circumstances of each state. Understanding these nuances is essential for policymakers and law enforcement agencies to continue improving public safety across the nation.
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
+
